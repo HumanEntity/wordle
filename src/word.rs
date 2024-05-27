@@ -2,6 +2,12 @@ use std::{collections::HashMap, mem::transmute};
 
 use owo_colors::OwoColorize;
 
+#[derive(Debug, Clone, thiserror::Error)]
+pub enum WordError {
+    #[error("Word to small {0}")]
+    TooSmall(usize),
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LetterMatch {
     Correct,
@@ -81,10 +87,15 @@ impl From<[char; 5]> for Word {
     }
 }
 
-impl From<&str> for Word {
-    fn from(value: &str) -> Self {
+impl TryFrom<&str> for Word {
+    type Error = WordError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
         let chars = value.chars().collect::<Vec<_>>();
-        Self([chars[0], chars[1], chars[2], chars[3], chars[4]])
+        if chars.len() < 5 {
+            return Err(WordError::TooSmall(chars.len()));
+        }
+        Ok(Self([chars[0], chars[1], chars[2], chars[3], chars[4]]))
     }
 }
 
@@ -151,45 +162,49 @@ mod test {
 
     type MatchList = [LetterMatch; 5];
 
+    use color_eyre::eyre::Result;
     use LetterMatch as LM;
 
     #[test]
-    fn try_match() {
-        let fuzzy = Word::from("fuzzy");
+    fn try_match() -> Result<()> {
+        let fuzzy = Word::try_from("fuzzy")?;
         // All absent
         assert_eq!(
-            fuzzy.match_word(&Word::from("hello")),
+            fuzzy.match_word(&Word::try_from("hello")?),
             MatchList::absent_all(),
         );
         // One correct
         assert_eq!(
-            fuzzy.match_word(&Word::from("testy")),
+            fuzzy.match_word(&Word::try_from("testy")?),
             [LM::Absent, LM::Absent, LM::Absent, LM::Absent, LM::Correct,]
         );
         // Present
         assert_eq!(
-            fuzzy.match_word(&Word::from("u00u0")),
+            fuzzy.match_word(&Word::try_from("u00u0")?),
             [LM::Present, LM::Absent, LM::Absent, LM::Absent, LM::Absent],
-        )
+        );
+        Ok(())
     }
 
     #[test]
-    fn test_hash() {
-        assert_eq!(Word::from("AAAAA").hash(), 0x0000004141414141);
-        assert_eq!(Word::from("aaaaa").hash(), 0x0000006161616161);
+    fn test_hash() -> Result<()> {
+        assert_eq!(Word::try_from("AAAAA")?.hash(), 0x0000004141414141);
+        assert_eq!(Word::try_from("aaaaa")?.hash(), 0x0000006161616161);
+        Ok(())
     }
 
     #[test]
-    fn print() {
-        let fuzzy = Word::from("fuzzy");
+    fn print() -> Result<()> {
+        let fuzzy = Word::try_from("fuzzy")?;
         let words = [
-            &Word::from("testy"),
-            &Word::from("hello"),
-            &Word::from("fizyk"),
+            &Word::try_from("testy")?,
+            &Word::try_from("hello")?,
+            &Word::try_from("fizyk")?,
         ];
         for w in &words {
             let matches = fuzzy.match_word(w);
             println!("{}", w.format(matches));
         }
+        Ok(())
     }
 }
