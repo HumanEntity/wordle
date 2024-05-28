@@ -19,7 +19,7 @@ pub enum LetterMatch {
 type MatchList = [LetterMatch; 5];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Word([char; 5]);
+pub struct Word(pub [char; 5]);
 
 impl Word {
     pub fn match_word(&self, word: &Word) -> [LetterMatch; 5] {
