@@ -6,6 +6,8 @@ use owo_colors::OwoColorize;
 pub enum WordError {
     #[error("Word to small {0}")]
     TooSmall(usize),
+    #[error("Word to large {0}")]
+    TooLarge(usize),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -110,8 +112,11 @@ impl TryFrom<&str> for Word {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         let chars = value.chars().collect::<Vec<_>>();
-        if chars.len() < 5 {
-            return Err(WordError::TooSmall(chars.len()));
+        let len = chars.len();
+        match len.cmp(&5) {
+            std::cmp::Ordering::Less => return Err(WordError::TooSmall(len)),
+            std::cmp::Ordering::Greater => return Err(WordError::TooLarge(len)),
+            std::cmp::Ordering::Equal => (),
         }
         Ok(Self([chars[0], chars[1], chars[2], chars[3], chars[4]]))
     }
