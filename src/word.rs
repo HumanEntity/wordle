@@ -87,6 +87,24 @@ impl From<[char; 5]> for Word {
     }
 }
 
+impl From<u64> for Word {
+    fn from(value: u64) -> Self {
+        let ch1 = value & 0xff;
+        let ch2 = (value & (0xff << 8)) >> 8;
+        let ch3 = (value & (0xff << 16)) >> 16;
+        let ch4 = (value & (0xff << 24)) >> 24;
+        let ch5 = (value & (0xff << 32)) >> 32;
+
+        Self([
+            char::from_u32(ch1 as u32).unwrap(),
+            char::from_u32(ch2 as u32).unwrap(),
+            char::from_u32(ch3 as u32).unwrap(),
+            char::from_u32(ch4 as u32).unwrap(),
+            char::from_u32(ch5 as u32).unwrap(),
+        ])
+    }
+}
+
 impl TryFrom<&str> for Word {
     type Error = WordError;
 
@@ -190,6 +208,13 @@ mod test {
     fn test_hash() -> Result<()> {
         assert_eq!(Word::try_from("AAAAA")?.hash(), 0x0000004141414141);
         assert_eq!(Word::try_from("aaaaa")?.hash(), 0x0000006161616161);
+        Ok(())
+    }
+
+    #[test]
+    fn from_hash() -> Result<()> {
+        let word = Word::try_from("fuzzy")?;
+        assert_eq!(word, Word::from(word.hash()));
         Ok(())
     }
 
