@@ -1,5 +1,7 @@
 use std::{collections::HashSet, fs::File, io::Read, path::Path};
 
+use rand::Rng;
+
 use crate::word::{Word, WordError};
 
 #[derive(Debug, thiserror::Error)]
@@ -53,6 +55,12 @@ impl Dict {
                 .map(|x| x.map_err(DictError::from))
                 .collect::<Result<HashSet<_>>>()?,
         ))
+    }
+
+    pub fn get_random(&self) -> Word {
+        let vec = self.valid_words.iter().collect::<Vec<_>>();
+        let len = vec.len();
+        Word::from(*vec[rand::thread_rng().gen_range(0..len)])
     }
 }
 
